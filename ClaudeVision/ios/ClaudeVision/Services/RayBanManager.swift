@@ -25,6 +25,7 @@ class RayBanManager: NSObject, ObservableObject, FrameSource {
     @Published var isRegistered: Bool = false
 
     // DAT SDK
+    private var deviceSession: DeviceSession?
     private var streamSession: StreamSession?
     private var deviceSelector: AutoDeviceSelector?
     private var stateToken: AnyListenerToken?
@@ -131,7 +132,17 @@ class RayBanManager: NSObject, ObservableObject, FrameSource {
             resolution: .high,
             frameRate: 30
         )
-        let session = StreamSession(streamSessionConfig: config, deviceSelector: selector)
+
+        // StreamSession has no public initializer (SDK 0.6.0) — it's created via
+        // DeviceSession.addStream(config:), which requires a started DeviceSession.
+        let deviceSession = try wearables.createSession(deviceSelector: selector)
+        self.deviceSession = deviceSession
+        try deviceSession.start()
+        guard let session = try deviceSession.addStream(config: config) else {
+            print("[RayBan] addStream returned nil")
+            connectionStatus = .error("Failed to create camera stream")
+            return
+        }
         self.streamSession = session
 
         // Monitor device availability
@@ -244,12 +255,14 @@ class RayBanManager: NSObject, ObservableObject, FrameSource {
 
     func stop() {
         Task { await streamSession?.stop() }
+        deviceSession?.stop()
         stateToken = nil
         frameToken = nil
         errorToken = nil
         deviceMonitorTask?.cancel()
         deviceMonitorTask = nil
         streamSession = nil
+        deviceSession = nil
         deviceSelector = nil
         isRunning = false
         connectionStatus = .disconnected
