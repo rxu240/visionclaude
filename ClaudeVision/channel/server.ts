@@ -530,5 +530,15 @@ log(`   🔐 Channel Token: ${CHANNEL_TOKEN}`)
 log(`   Dashboard:  http://localhost:${PORT}`)
 log(`   Enter token in iOS app → Settings → Channel Token`)
 
-// Auto-open dashboard in default browser
-Bun.spawn(['open', `http://localhost:${PORT}`], { stdout: 'ignore', stderr: 'ignore' })
+// Auto-open dashboard in default browser (cross-platform, best-effort)
+try {
+  const opener =
+    process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'cmd' : 'xdg-open'
+  const args =
+    process.platform === 'win32'
+      ? ['/c', 'start', '', `http://localhost:${PORT}`]
+      : [`http://localhost:${PORT}`]
+  Bun.spawn([opener, ...args], { stdout: 'ignore', stderr: 'ignore' })
+} catch (e) {
+  log(`(couldn't auto-open dashboard: ${e})`)
+}
