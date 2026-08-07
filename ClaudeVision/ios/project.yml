@@ -40,3 +40,5 @@ schemes:
         ClaudeVision: all
     run:
       config: Debug
+# CI trigger: build-ios.yml watches ClaudeVision/ios/** — this comment
+# triggers a fresh unsigned-IPA build run.
