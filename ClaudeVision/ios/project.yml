@@ -8,7 +8,13 @@ options:
 packages:
   meta-wearables-dat-ios:
     url: https://github.com/facebook/meta-wearables-dat-ios
-    from: "0.5.0"
+    # Pinned exact (not "from:") on purpose: the app code uses the pre-0.7.0
+    # StreamSession/StreamSessionConfig/StreamSessionError/StreamSessionState
+    # API, which Meta renamed in 0.7.0 and removed entirely in 0.9.0 (replaced
+    # by DeviceSession.addCamera(config:)/Camera/Stream). "from: 0.5.0" was
+    # resolving to the newest 0.x release and breaking the build. See
+    # docs/sdk-0.9-migration.md for the plan to move onto the current API.
+    exactVersion: "0.6.0"
 
 targets:
   ClaudeVision:
@@ -40,5 +46,3 @@ schemes:
         ClaudeVision: all
     run:
       config: Debug
-# CI trigger: build-ios.yml watches ClaudeVision/ios/** — this comment
-# triggers a fresh unsigned-IPA build run.
